@@ -68,53 +68,40 @@ def do_sequential(seq, ctx):
             ctx = bind_pat_match(args[0], value, ctx)
         elif seq_tp == 'expr':
             last = eval(args[0], ctx)
-
     return last
 
 def eval(ast, ctx):
-    command, *args = ast
-
-    match command:
-        case '+':
-            return eval(args[0], ctx) + eval(args[1], ctx)
-        case '-':
-            return eval(args[0], ctx) - eval(args[1], ctx)
-        case '*':
-            return eval(args[0], ctx) * eval(args[1], ctx)
-        case '^':
-            return eval(args[0], ctx) ** eval(args[1], ctx)
-        case 'num':
-            return args[0]
-        case 'str':
-            return args[0]
-        case 'doseq':
-            return do_sequential(args[0], ctx)
-        case 'defstruct':
-            return struct(args[0])
-        case 'caseof':
-            return case_of(eval(args[0], ctx), args[1], ctx)
-        case 'let':
-            return let(args[0], args[1], ctx)
-        case 'var':
-            name = args[0]
+    match ast:
+        case ('+', lhs, rhs):
+            return eval(lhs, ctx) + eval(rhs, ctx)
+        case ('-', lhs, rhs):
+            return eval(lhs, ctx) - eval(rhs, ctx)
+        case ('*', lhs, rhs):
+            return eval(lhs, ctx) * eval(rhs, ctx)
+        case ('^', lhs, rhs):
+            return eval(lhs, ctx) ** eval(rhs, ctx)
+        case ('num' | 'str', val):
+            return val
+        case ('doseq', seq):
+            return do_sequential(seq, ctx)
+        case ('defstruct', names):
+            return struct(names)
+        case ('caseof', val, arms):
+            return case_of(eval(val, ctx), arms, ctx)
+        case ('let', pats, in_):
+            return let(pats, in_, ctx)
+        case ('var', name):
             if name in ctx:
                 return ctx[name]
             raise NameError(f"Unknown variable {name!r}")
-        case 'apply':
-            f = eval(args[0], ctx)
-            val = eval(args[1], ctx)
+        case ('apply', func, arg):
+            f = eval(func, ctx)
+            val = eval(arg, ctx)
             return f(val)
-
-        case 'defunc':
-            pat = args[0]
-            body = args[1]
-
+        case ('defunc', pat, body):
             def func(x):
                 new_ctx = bind_pat_match(pat, x, ctx)
                 return eval(body, new_ctx)
             return func
-
         case tp:
             raise ValueError(f"Unknown command {tp!r} with args {args}")
-        
-

@@ -1,4 +1,4 @@
-from peco import *
+from aozaki.peco.peco import *
 import string
 
 ws = many(space)
