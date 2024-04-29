@@ -1,0 +1,6 @@
+let z = f: x: x;
+    compose = f: g: x: f $ g x;
+    s = n: f: compose f $ n f;
+    decode = f: f (x: x + 1) 0;
+in decode $ s $ s $ s $ s z
+

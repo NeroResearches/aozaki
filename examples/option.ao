@@ -1,0 +1,9 @@
+let
+    some = { some };
+	none = {};
+	unwrap_or = or: opt: case (opt) of { { some: x } -> x, _ -> or };
+
+	some_msg = "it was some!";
+	none_msg = "it was none!";
+in unwrap_or none_msg (some some_msg)
+
