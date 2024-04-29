@@ -29,12 +29,15 @@ string = seq(
 
 free = lambda f: memo(seq(ws, f))
 skip = lambda s: free(sym(s))
+mkvar = to(lambda n: ('var', n))
 
 name_start = alt(letter, sym('_'))
 name_rest = alt(name_start, digit, one_of('\'?'))
-name = seq(name_start, many(name_rest))
+name = alt(
+    cite(seq(name_start, many(name_rest))),
+    seq(skip('@'), string, to(lambda old: old[1]))
+)
 
-var = seq(cite(name), to(lambda n: ('var', n)))
 op = lambda c: free(cite(sym(c)))
 
 mkbop = to(lambda x, op, y: (op, x, y))
@@ -47,7 +50,7 @@ expr = lambda s: expr(s)
 power = lambda s: power(s)
 special = lambda s: special(s)
 
-struct_fields = list_of(free(cite(name)), skip(','))
+struct_fields = list_of(free(name), skip(','))
 struct = seq(
     skip('{'),
     group(opt(struct_fields)),
@@ -56,18 +59,24 @@ struct = seq(
     mkstruct,
 )
 
-bind_pat = seq(free(cite(name)), to(lambda n: ('bind', n)))
+bind_pat = seq(free(name), to(lambda n: ('bind', n)))
 skip_pat = seq(skip('_'), to(lambda: ('any',)))
 
 pat = lambda s: pat(s)
+
+struct_field_pat_sugar = seq(
+    memo(name),
+    to(lambda n: (n, ('bind', n)))
+)
+struct_field_pat_verbose = seq(    
+    memo(name),
+    skip(':'),
+    ws,
+    pat,
+    to(lambda n, p: (n, p)),
+)
 struct_fields_pat = list_of(
-    free(seq(
-        cite(name),
-        skip(':'),
-        ws,
-        pat,
-        to(lambda n, p: (n, p))
-    )),
+    free(alt(struct_field_pat_verbose, struct_field_pat_sugar)),
     skip(',')
 )
 struct_pat = seq(
@@ -154,16 +163,28 @@ factor = alt(
     function,
     struct,
     free(number),
-    free(var),
+    free(seq(name, mkvar)),
     free(string),
     seq(skip('('), expr, skip(')')),
 )
+
+dot_op = lambda s: dot_op(s)
+
+dot_rhs = alt(
+    seq(name, to(lambda n: ('str', n))),
+    number,
+)
+dot_op = left(alt(
+    seq(dot_op, op('.'), dot_rhs, mkbop),
+    factor,
+))
+
 special = left(alt(
     let,
     do,
     case_of,
-    seq(special, some(space), factor, mkappl),
-    factor,
+    seq(special, some(space), dot_op, mkappl),
+    dot_op,
 ))
 power = left(alt(
     seq(special, op('^'), power, mkbop),

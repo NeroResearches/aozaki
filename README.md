@@ -64,13 +64,32 @@ case (10) of {
 
 -- structs can be pattern matched
 case ({ x, y } 10 20) of {
-  { z: z } -> "this can't happen",
-  { x: x, y: y } -> x + y,
+  { z } -> "this can't happen",
+  { x, y } -> x + y,
 
   -- Patterns are checked from top to bottom, so interpreter will pick pattern that matched first
-  { x: x } -> "this will happen",
+  { x } -> "this will happen",
   {} -> "this will happen",
-} -- 30
+}
+-- ^ 30
+
+case ({ result } 10) of {
+  -- after : goes pattern
+  { result: 10 } -> 30,
+  { result: { x } } -> x,
+
+  { result: other_name } -> other_name + 10,
+}
+
+-- you can create identifier from any valid string
+let @"hello, world!" = 10;
+in @"hello, world!" + 10
+
+let type = { x, y };
+    value = type 10 20;
+in value.x
+-- ^^^^^^
+-- You can access struct fields with dot operator
 
 -- Putting it all together
 let some = { some };

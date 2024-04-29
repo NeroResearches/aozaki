@@ -1,0 +1,7 @@
+let Person = { age, name, occupation };
+    nero = Person 18 "Aleksandr" "Russia";
+
+	{ age, name, occupation } = nero;
+in age
+-- TODO: tuples
+

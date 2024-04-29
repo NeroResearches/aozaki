@@ -72,6 +72,8 @@ def do_sequential(seq, ctx):
 
 def eval(ast, ctx):
     match ast:
+        case ('.', lhs, rhs):
+            return eval(lhs, ctx)[eval(rhs, ctx)]
         case ('+', lhs, rhs):
             return eval(lhs, ctx) + eval(rhs, ctx)
         case ('-', lhs, rhs):
