@@ -3,7 +3,7 @@ from pprint import pprint
 
 from .parser import expr
 from .eval import eval
-from peco import parse
+from aozaki.peco.peco import parse
 
 try:
     file_name = argv[1]

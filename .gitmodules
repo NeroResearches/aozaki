@@ -1,0 +1,3 @@
+[submodule "aozaki/peco"]
+	path = aozaki/peco
+	url = https://github.com/true-grue/peco
