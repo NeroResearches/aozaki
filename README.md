@@ -44,18 +44,23 @@ x: y: x + y
 case (10) of {
   10 -> 20,
   30 -> 40,
-} -- 20, brackets and braces are necessary
+}
+-- 20, brackets and braces are necessary
 
 -- function arguments are pattern matched, actually
-(10: 20) 10 -- 20
-(10: 20) 20 -- exception!
+(10: 20) 10
+-- ^ 20
+
+(10: 20) 20
+-- ^ exception!
 
 -- in aozaki, all your custom types tied to single `struct` (aka product) type
 { x, y }
--- this defines type that is composed of two fields: x and y
+-- ^ this defines type that is composed of two fields: x and y
 
 { x, y } 10 20 -- by applying values to type you can get instance of it
-{} -- this is value of type {}
+  {}
+-- ^ this is value of type {}
 
 -- structs can be pattern matched
 case ({ x, y } 10 20) of {
@@ -81,7 +86,7 @@ let some = { some };
         n -> n,
       };
 in map (x: x + 10) $ some $ unwrap_or 10 (some 20)
--- some 30
+-- ^ some 30
 ```
 
 # Examples
