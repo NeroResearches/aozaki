@@ -5,8 +5,10 @@ I've used [peco](https://github.com/true-grue/peco) by @true-grue for the parser
 
 # Learn X in Y minutes, where X = aozaki
 
-There's no comments, let's imagine that comment syntax is `-- comment`
 ```haskell
+-- Comments can appear only on start of line
+  -- even like that
+
 -- numbers
 10
 

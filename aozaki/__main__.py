@@ -14,7 +14,17 @@ except IndexError:
 with open(file_name) as fp:
     text = fp.read()
 
-state = parse(text.strip(), expr)
+def prepare(s):
+    s = s.strip()
+    lines = []
+
+    for l in s.split('\n'):
+        if l.strip().startswith('--'):
+            continue
+        lines.append(l)
+    return '\n'.join(lines)
+
+state = parse(prepare(text), expr)
 if not state.ok:
     print('Failed to parse, remaining:')
     print(text[state.pos:])
