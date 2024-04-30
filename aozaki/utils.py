@@ -16,7 +16,7 @@ def mk_context(ctx=None):
     ctx['cons'] = lambda el: lambda rem: (el, *rem)
     ctx['nil'] = ()
     ctx['len'] = len
-    ctx['uncons'] = lambda seq: (seq[0], seq[1:])
+    ctx['uncons'] = lambda seq: (seq[0], seq[1:]) if len(seq) >= 1 else ()
     ctx['empty?'] = lambda x: len(x) == 0
     ctx['true'] = True
     ctx['gt'] = lambda x: lambda y: x > y
