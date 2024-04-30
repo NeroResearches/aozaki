@@ -1,47 +1,38 @@
-from sys import argv, exit as sys_exit
 from pprint import pprint
+from pathlib import Path
 
-from .parser import expr
+from .parser import parse_ast
 from .eval import eval
-from aozaki.peco.peco import parse
+from .utils import mk_context
 
-try:
-    file_name = argv[1]
-except IndexError:
-    print(f'aozaki usage: aozaki script.ao')
-    sys_exit(1)
+from argparse import ArgumentParser
 
-with open(file_name) as fp:
-    text = fp.read()
+parser = ArgumentParser(
+    prog='aozaki',
+    description='Simple dynamically typed programming language',
+)
+parser.add_argument(
+    '-e',
+    '--empty-context',
+    help='Make context of evaluation empty (without builtins)',
+    action='store_true',
+)
+parser.add_argument('filename', help='file to execute', nargs='?')
 
-def prepare(s):
-    s = s.strip()
-    lines = []
+args = parser.parse_args()
 
-    for l in s.split('\n'):
-        if l.strip().startswith('--'):
-            continue
-        lines.append(l)
-    return '\n'.join(lines)
+if args.empty_context:
+    ctx = {}
+else:
+    ctx = mk_context()
 
-state = parse(prepare(text), expr)
-if not state.ok:
-    print('Failed to parse, remaining:')
-    print(text[state.pos:])
-    print('---------------------------')
-    print('Stack:')
-    pprint(state.stack)
-    sys_exit(1)
+if args.filename is None:
+    raise NotImplementedError("REPL is not yet supported")
 
-ast = state.stack[0]
-print('AST')
-print('===================')
-pprint(ast)
-
-print()
-print('Execution')
-print('===================')
-
-res = eval(ast, {})
+res = ctx['import'](args.filename)
+print('======================')
+print('Evaluation result')
+print('======================')
 print(res)
+
 

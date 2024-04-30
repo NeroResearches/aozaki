@@ -1,0 +1,24 @@
+let
+	foldl = f: acc: arr:
+		case (len arr) of {
+			0 -> acc,
+			othr -> foldl f (f acc arr.0) $ tail arr,
+		};
+	flip = f: x: y: f y x;
+	partition = f: arr:
+		let concatIf = acc: element:
+			if (f element) (_: concat acc (element,)) (_: acc)
+			;
+		in foldl concatIf () arr;
+	quicksort = arr:
+		case (len arr) of {
+			0 -> (),
+			_ ->
+				let (h, t) = uncons arr;
+					lt_arr = quicksort $ partition (flip lt h) arr;
+					gt_arr = quicksort $ partition (flip gt h) arr;
+				in concat lt_arr $ cons h $ gt_arr
+		}
+		;
+in quicksort (5, 4, 3, 2, 1)
+

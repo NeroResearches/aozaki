@@ -1,6 +1,7 @@
 from aozaki.peco.peco import *
 import string
 
+tok = lambda f: memo(seq(ws, f))
 ws = many(space)
 mk_num = to(lambda x: ('num', int(x)))
 number = seq(cite(some(digit)), mk_num)
@@ -28,7 +29,7 @@ string = seq(
 )
 
 free = lambda f: memo(seq(ws, f))
-skip = lambda s: free(sym(s))
+skip = lambda s: tok(sym(s))
 mkvar = to(lambda n: ('var', n))
 
 name_start = alt(letter, sym('_'))
@@ -86,10 +87,18 @@ struct_pat = seq(
     skip('}'),
     to(lambda fields_pat: ('matchstruct', fields_pat))
 )
+tup_pat = seq(
+    skip('('),
+    group(opt(list_of(pat, skip(',')))),
+    opt(skip(',')),
+    skip(')'),
+    to(lambda pats: ('tuple', pats))
+)
 
 pat = left(alt(
     skip_pat,
     bind_pat,
+    tup_pat,
     free(number),
     free(string),
     struct_pat,
@@ -157,6 +166,13 @@ let = seq(
     to(lambda pats, in_: ('let', pats, in_))
 )
 
+tup = seq(
+    skip('('),
+    group(opt(list_of(expr, skip(',')))),
+    opt(skip(',')),
+    skip(')'),
+    to(lambda tupl: ('tuple', tupl))
+)
 mkfunc = to(lambda p, e: ('defunc', p, e))
 function = seq(pat, skip(':'), expr, mkfunc)
 factor = alt(
@@ -165,7 +181,8 @@ factor = alt(
     free(number),
     free(seq(name, mkvar)),
     free(string),
-    seq(skip('('), expr, skip(')')),
+    seq(skip('('), memo(expr), skip(')')),
+    tup,
 )
 
 dot_op = lambda s: dot_op(s)
@@ -176,6 +193,16 @@ dot_rhs = alt(
 )
 dot_op = left(alt(
     seq(dot_op, op('.'), dot_rhs, mkbop),
+    seq(
+        dot_op,
+        seq(
+            skip('`'),
+            factor,
+            skip('`'),
+        ),
+        factor,
+        to(lambda lhs, f, rhs: ('apply', ('apply', f, lhs), rhs)),
+    ),
     factor,
 ))
 
@@ -199,14 +226,27 @@ addsub = left(alt(
     seq(addsub, alt(op('+'), op('-')), term, mkbop),
     term,
 ))
-comment = seq(
-    sym('--'),
-    non(sym('\n')),
-)
 expr = left(alt(
     seq(addsub, skip('$'), expr, to(lambda f, arg: ('apply', f, arg))),
-    seq(comment, expr),
     addsub,
 ))
+
+def parse_ast(text, parser=expr):
+    text = prepare(text)
+    state = parse(text, parser)
+    if not state.ok:
+        raise SyntaxError(f"Cannot parse {text[state.pos:]!r} (stack = {state.stack!r})")
+    return state.stack[0]
+
+def prepare(s):
+    s = s.strip()
+    lines = []
+
+    for l in s.split('\n'):
+        if l.strip().startswith('--'):
+            continue
+        lines.append(l)
+    return '\n'.join(lines)
+
 
 

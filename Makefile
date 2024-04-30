@@ -6,5 +6,6 @@ examples:
 	python3 -m aozaki examples/option.ao
 	python3 -m aozaki examples/omit_bind.ao
 	python3 -m aozaki examples/cursed_identifiers.ao
+	python3 -m aozaki examples/quicksort.ao
 
 .DEFAULT_GOAL := examples

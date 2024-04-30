@@ -1,5 +1,5 @@
 from functools import reduce
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 def apply_dicts(dicts):
     return reduce(lambda x, y: {**x, **y}, dicts, {})
@@ -25,10 +25,25 @@ def pat_match_struct(x, fields, ctx):
             return False, ctx
     return True, ctx
 
+def pat_match_tuple(x, pats, ctx):
+    if len(x) != len(pats):
+        return False, ctx
+    for element, pat in zip(x, pats):
+        success, new_ctx = pat_match(element, pat, ctx)
+        if not success:
+            return False, ctx
+        ctx = new_ctx
+
+    return True, ctx
+
 def pat_match(x, pat, ctx):
     pat_tp, *args = pat
     if pat_tp == 'num':
         return (isinstance(x, (int, float)) and x == args[0], ctx)
+    elif pat_tp == 'tuple':
+        if not isinstance(x, Sequence):
+            return False, ctx
+        return pat_match_tuple(x, args[0], ctx)
     elif pat_tp == 'any':
         return True, ctx
     elif pat_tp == 'str':
@@ -56,8 +71,10 @@ def bind_pat_match(pat, value, ctx):
 
 def let(pats, in_, ctx):
     for pat, expr in pats:
-        value = eval(expr, ctx)
-        ctx = bind_pat_match(pat, value, ctx)
+        ctx_copy = {**ctx}
+        value = eval(expr, ctx_copy)
+        ctx = bind_pat_match(pat, value, ctx_copy)
+        ctx_copy.update(ctx)
     return eval(in_, ctx)
 
 def do_sequential(seq, ctx):
@@ -72,6 +89,8 @@ def do_sequential(seq, ctx):
 
 def eval(ast, ctx):
     match ast:
+        case ('tuple', tup):
+            return tuple(eval(e, ctx) for e in tup)
         case ('.', lhs, rhs):
             return eval(lhs, ctx)[eval(rhs, ctx)]
         case ('+', lhs, rhs):
@@ -105,5 +124,5 @@ def eval(ast, ctx):
                 new_ctx = bind_pat_match(pat, x, ctx)
                 return eval(body, new_ctx)
             return func
-        case tp:
-            raise ValueError(f"Unknown command {tp!r} with args {args}")
+        case oth:
+            raise ValueError(f"Unknown command {oth[0]!r} with args {oth[1:]}")
